@@ -7,6 +7,12 @@ public class SoldierAnimationStateController : MonoBehaviour
 
     string nameStateWalking = "isWalking";
     string nameStateRunning = "isRunning";
+    string nameParamVelocity = "Velocity";
+
+    float velocity = 0f;
+    [SerializeField] float acceleration = 0.1f;
+    [SerializeField] float deceleration = 0.5f;
+    int VelocityHash;
 
     void Start()
     {
@@ -18,25 +24,40 @@ public class SoldierAnimationStateController : MonoBehaviour
         bool forwatdPressed = Keyboard.current.wKey.isPressed;
         bool runPressed = Keyboard.current.dKey.isPressed;
 
-        if (forwatdPressed)
+        if (forwatdPressed && velocity < 1)
         {
-            animator.SetBool(nameStateWalking, true);
+            velocity += Time.deltaTime * acceleration;
         }
 
-        if (!forwatdPressed)
+        if (!forwatdPressed && velocity > 0)
         {
-            animator.SetBool(nameStateWalking, false);
+            velocity -= Time.deltaTime * deceleration;
         }
 
-        if (runPressed)
-        {
-            animator.SetBool(nameStateRunning, true);
-        }
+        if (!forwatdPressed && velocity < 0) velocity = 0;
 
-        if (!runPressed)
-        {
-            animator.SetBool(nameStateRunning, false);
-        }
+        animator.SetFloat(nameParamVelocity, velocity);
 
+
+        //controller state
+        //if (forwatdPressed)
+        //{
+        //    animator.SetBool(nameStateWalking, true);
+        //}
+
+        //if (!forwatdPressed)
+        //{
+        //    animator.SetBool(nameStateWalking, false);
+        //}
+
+        //if (runPressed)
+        //{
+        //    animator.SetBool(nameStateRunning, true);
+        //}
+
+        //if (!runPressed)
+        //{
+        //    animator.SetBool(nameStateRunning, false);
+        //}
     }
 }
