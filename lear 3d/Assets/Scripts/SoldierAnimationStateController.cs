@@ -1,71 +1,120 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class SoldierAnimationStateController : MonoBehaviour
 {
-    [SerializeField] Animator animator;
+    [SerializeField] private Animator animator;
 
-    string nameStateWalking = "isWalking";
-    string nameStateRunning = "isRunning";
-    string nameParamVelocity = "Velocity";
+    [Header("Animator Parameters")]
+    [SerializeField] private string nameStateWalking = "isWalking";
+    [SerializeField] private string nameStateRunning = "isRunning";
+    [SerializeField] private string nameParamVelocity = "Velocity";
 
-    float velocity = 0f;
-    [SerializeField] float acceleration = 0.1f;
-    [SerializeField] float deceleration = 0.5f;
+    [Header("Movement Settings")]
+    [SerializeField] private float acceleration = 0.1f;
+    [SerializeField] private float deceleration = 0.5f;
+    [SerializeField] private float accelerationTow = 2f;
+    [SerializeField] private float decelerationTow = 2f;
+    [SerializeField] private float maxWalkVelocity = 0.5f;
+    [SerializeField] private float maxRunVelocity = 2f;
 
-    void Start()
+    private float velocity = 0f;
+    private float velocityZ = 0f;
+    private float velocityX = 0f;
+
+    private void Update()
     {
-        
+        TwoDimensionalBlendTrees();
     }
 
-    void Update()
+    private void TwoDimensionalBlendTrees()
     {
+        // --- Input ---
+        bool forwardPressed = Keyboard.current.wKey.isPressed;
+        bool leftPressed = Keyboard.current.dKey.isPressed;
+        bool rightPressed = Keyboard.current.aKey.isPressed;
+        bool runPressed = Keyboard.current.hKey.isPressed;
 
+        float maxVelocityCurrent = runPressed ? maxRunVelocity : maxWalkVelocity;
+
+        // --- Xử lý Z (tiến/lùi) ---
+        if (forwardPressed)
+        {
+            if (velocityZ < maxVelocityCurrent)
+            {
+                velocityZ += Time.deltaTime * accelerationTow;
+                if (velocityZ > maxVelocityCurrent) velocityZ = maxVelocityCurrent;
+            }
+            else if (velocityZ > maxVelocityCurrent)
+            {
+                velocityZ -= Time.deltaTime * decelerationTow;
+                if (velocityZ < maxVelocityCurrent) velocityZ = maxVelocityCurrent;
+            }
+        }
+        else
+        {
+            if (velocityZ > 0)
+            {
+                velocityZ -= Time.deltaTime * decelerationTow;
+                if (velocityZ < 0) velocityZ = 0;
+            }
+        }
+
+        // --- X (trái/phải) ---
+        float targetVelocityX = 0f;
+        if (leftPressed) targetVelocityX = -maxVelocityCurrent;
+        if (rightPressed) targetVelocityX = maxVelocityCurrent;
+
+        // Tăng tốc hoặc giảm tốc về targetVelocityX
+        if (velocityX < targetVelocityX)
+        {
+            velocityX += Time.deltaTime * accelerationTow;
+            if (velocityX > targetVelocityX) velocityX = targetVelocityX;
+        }
+        if (velocityX > targetVelocityX)
+        {
+            velocityX -= Time.deltaTime * decelerationTow;
+            if (velocityX < targetVelocityX) velocityX = targetVelocityX;
+        }
+
+        // Dừng hẳn khi gần 0
+        if (!leftPressed && !rightPressed && Mathf.Abs(velocityX) < 0.05f) velocityX = 0;
+
+        // --- Update Animator ---
+        animator.SetFloat("Velocity Z", velocityZ);
+        animator.SetFloat("Velocity X", velocityX);
     }
 
-    void OneDimensionalBlendTrees()
+
+    private void OneDimensionalBlendTrees()
     {
-        bool forwatdPressed = Keyboard.current.wKey.isPressed;
+        bool forwardPressed = Keyboard.current.wKey.isPressed;
         bool runPressed = Keyboard.current.dKey.isPressed;
 
-        if (forwatdPressed && velocity < 1)
+        if (forwardPressed && velocity < 1)
         {
             velocity += Time.deltaTime * acceleration;
         }
 
-        if (!forwatdPressed && velocity > 0)
+        if (!forwardPressed && velocity > 0)
         {
             velocity -= Time.deltaTime * deceleration;
         }
 
-        if (!forwatdPressed && velocity < 0) velocity = 0;
+        if (!forwardPressed && velocity < 0)
+        {
+            velocity = 0;
+        }
 
         animator.SetFloat(nameParamVelocity, velocity);
     }
 
-    void ControllState()
+    private void ControllState()
     {
-        bool forwatdPressed = Keyboard.current.wKey.isPressed;
+        bool forwardPressed = Keyboard.current.wKey.isPressed;
         bool runPressed = Keyboard.current.dKey.isPressed;
 
-        if (forwatdPressed)
-        {
-            animator.SetBool(nameStateWalking, true);
-        }
-
-        if (!forwatdPressed)
-        {
-            animator.SetBool(nameStateWalking, false);
-        }
-
-        if (runPressed)
-        {
-            animator.SetBool(nameStateRunning, true);
-        }
-
-        if (!runPressed)
-        {
-            animator.SetBool(nameStateRunning, false);
-        }
+        animator.SetBool(nameStateWalking, forwardPressed);
+        animator.SetBool(nameStateRunning, runPressed);
     }
 }
